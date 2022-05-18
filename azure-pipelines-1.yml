@@ -10,7 +10,7 @@ pool:
    name: default
    vmImage: For-pipeline
       - task: CmdLine@2
-     inputs:
+      inputs:
        script: 'psexec'
        workingDirectory: 'C:\PSTools'
     
