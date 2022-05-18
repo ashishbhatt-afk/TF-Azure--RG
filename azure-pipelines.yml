@@ -16,3 +16,4 @@ steps:
   workingDirectory: C:\PSTools
 
 - script: 'echo success'
+  displayName: 'trying success'
