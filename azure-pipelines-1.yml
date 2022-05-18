@@ -7,9 +7,8 @@ trigger:
 - main
 
 pool:
- name: default
-   vmImage: 'For-pipeline'
-
+   name: default
+   vmImage: For-pipeline
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
