@@ -11,7 +11,7 @@ pool:
    vmImage: For-pipeline
     - task: PowerShell@2
       inputs:
-      targetType: 'inline'
-      script: 'psexec'
-      workingDirectory: 'C:\PSTools'
+       targetType: 'inline'
+       script: 'psexec'
+       workingDirectory: 'C:\PSTools'
 
