@@ -15,5 +15,4 @@ steps:
   displayName: 'Run a one-line script'
   workingDirectory: C:\PSTools
 
-- script: 'echo hello'
-  echo Success.
+- script: 'echo success'
