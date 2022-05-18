@@ -18,4 +18,3 @@ steps:
 - script: |
   echo Success.
     echo See https://aka.ms/yaml
-
