@@ -11,8 +11,9 @@ pool:
   vmImage: For-pipeline
 
 steps:
-- script: 'psexec'
+- script: 'PsExec'
   displayName: 'Run a one-line script'
+  workingDirectory: C:\PSTools
 
 - script: |
     echo Add other tasks to build, test, and deploy your project.
