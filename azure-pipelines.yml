@@ -11,7 +11,7 @@ pool:
   vmImage: For-pipeline
 
 steps:
-- script: echo Hello, world!
+- script: 'psexec'
   displayName: 'Run a one-line script'
 
 - script: |
