@@ -14,6 +14,3 @@ steps:
 - script: 'PsExec'
   displayName: 'Run a one-line script'
   workingDirectory: C:\PSTools
-
-- script: 'echo success'
-  displayName: 'trying success'
