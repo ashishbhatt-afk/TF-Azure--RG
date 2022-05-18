@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: For-pipeline
 
 steps:
 - script: echo Hello, world!
