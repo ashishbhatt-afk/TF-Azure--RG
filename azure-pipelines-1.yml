@@ -9,8 +9,8 @@ trigger:
 pool:
    name: default
    vmImage: For-pipeline
-      - task: CmdLine@2
-      inputs:
+     - task: CmdLine@2
+     inputs:
        script: 'psexec'
        workingDirectory: 'C:\PSTools'
     
