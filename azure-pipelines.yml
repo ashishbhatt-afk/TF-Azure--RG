@@ -15,7 +15,7 @@ steps:
       inputs:
               azureSubscription: 'azdo-pat'
               ScriptType: 'InlineScript'
-              Inline: |
+              Inline: 
                 $token = (Get-AzAccessToken -ResourceUrl "499b84ac-1321-427f-aa17-267ca6975798").Token
                 $token
       
