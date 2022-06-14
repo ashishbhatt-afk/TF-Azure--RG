@@ -8,30 +8,29 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: |
+    - task: AzurePowerShell@5
       inputs:
-              azureSubscription: 'azdo-pat'
-              ScriptType: 'InlineScript'
-              Inline: 
-                $token = (Get-AzAccessToken -ResourceUrl "499b84ac-1321-427f-aa17-267ca6975798").Token
-                $token
-      
-                $URL = "https://vssps.dev.azure.com/ashishbhatt0517/_apis/tokens/pats?api-version=7.1-preview.1"
-                $header = @{
-                    'Authorization' = 'Bearer ' + $token
-                    'Content-Type' = 'application/json'
-                }
-                $body = @"
-                  {
-                    "displayName": "new_token",
-                    "scope": "app_token",
-                    "validTo":  "2022-07-25T11:28:08.3433333Z",
-                    "allOrgs": false
-                  }
-                "@
+        azureSubscription: 'azdo-pat'
+        ScriptType: 'InlineScript'
+        Inline: |
+          $token = (Get-AzAccessToken -ResourceUrl "499b84ac-1321-427f-aa17-267ca6975798").Token
+          $token
+
+          $URL = "https://vssps.dev.azure.com/tetrapak-tpps/_apis/tokens/pats?api-version=7.1-preview.1"
+          $header = @{
+              'Authorization' = 'Bearer ' + $token
+              'Content-Type' = 'application/json'
+          }
+          $body = @"
+            {
+              "displayName": "new_token",
+              "scope": "app_token",
+              "validTo":  "2022-07-25T11:28:08.3433333Z",
+              "allOrgs": false
+            }
+          "@
+
+          $data = $body |
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
