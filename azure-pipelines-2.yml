@@ -12,7 +12,7 @@ pool:
 steps:
 - $PAT = cxa6njob3p64nghathzncbiovnfpbyqlu3rbwuy4goagrcqciema
 $connectionToken="$($PAT)"
-$base64AuthInfo= [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(":$($connectionToken)"))
+$base64AuthInfo= [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("::$($connectionToken)"))
 
 
 
