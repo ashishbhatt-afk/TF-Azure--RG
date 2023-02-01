@@ -15,7 +15,7 @@ stages:
       vmImage: 'windows-latest'
     steps:
       - task: PowerShell@1    
-        displayName: Create build container
+        displayName: Print hello World must be success
         inputs:
           scriptType: inlineScript
           inlineScript: > 
@@ -34,14 +34,14 @@ stages:
     steps:               
       - task: PowerShell@1
         continueOnError: true
-        displayName: Copy artifacts to release directory                  
+        displayName: task that would fail                  
         inputs:
           scriptType: inlineScript
           inlineScript: >
             echo $(testvariable)
 
       - task: PowerShell@1
-        displayName: Publish and install app into container
+        displayName: print hello
         inputs:
           scriptType: inlineScript
           inlineScript: >
