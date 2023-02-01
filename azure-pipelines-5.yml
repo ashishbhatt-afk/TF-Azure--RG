@@ -23,22 +23,23 @@ stages:
 - stage: Release
   displayName: Release
   jobs:
-  dependsOn: build
-  condition: Succeeded()
-  - deployment:
+  - job: release
     displayName: Release
     pool:
       name: Azure Pipelines
       demands: xcode
-    environment: Release
-    strategy:
-      runOnce:
-        deploy:
-          steps:               
-            - task: PowerShell@1
-              continueOnError: true
-              displayName: Copy artifacts to release directory                  
-              inputs:
-                scriptType: inlineScript
-                inlineScript: >
-                  echo $(testvariable)
+    steps:               
+      - task: PowerShell@1
+        continueOnError: true
+        displayName: Copy artifacts to release directory                  
+        inputs:
+          scriptType: inlineScript
+          inlineScript: >
+            echo $(testvariable)
+
+      - task: PowerShell@1
+        displayName: Publish and install app into container
+        inputs:
+          scriptType: inlineScript
+          inlineScript: >
+            echo hello
