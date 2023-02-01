@@ -3,6 +3,7 @@ trigger:
 
 pool:
   name: Azure Pipelines
+  vmImage: 'windows-latest'
 
 stages:
 - stage: build
@@ -11,6 +12,7 @@ stages:
   - job: Build
     pool:
       name: Azure Pipelines
+      vmImage: 'windows-latest'
     steps:
       - task: PowerShell@1    
         displayName: Create build container
@@ -27,6 +29,7 @@ stages:
     displayName: Release
     pool:
       name: Azure Pipelines
+      vmImage: 'windows-latest'
       demands: xcode
     steps:               
       - task: PowerShell@1
