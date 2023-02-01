@@ -23,6 +23,8 @@ stages:
 - stage: Release
   displayName: Release
   jobs:
+  dependsOn: build
+  condition: Succeeded()
   - deployment:
     displayName: Release
     pool:
