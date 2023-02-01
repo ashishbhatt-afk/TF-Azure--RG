@@ -1,0 +1,53 @@
+trigger:
+- '*'
+
+pool:
+  name: Default
+
+variables:
+  image_name: mcr.microsoft.com/businesscentral/sandbox
+  container_name: Build
+  company_name: My Company
+  user_name: admin
+  password: P@ssword1
+  license_file: C:\Users\james.pearson.TECMAN\Desktop\Licence.flf
+
+stages:
+- stage: build
+  displayName: Build
+  jobs:
+  - job: Build
+    pool:
+      name: Default
+    steps:
+      - task: PowerShell@1    
+        displayName: Create build container
+        inputs:
+          scriptType: inlineScript
+          inlineScript: > 
+            Import-Module navcontainerhelper;
+            $Credential = [PSCredential]::new('$(user_name)',(ConvertTo-SecureString '$(password)' -AsPlainText -Force));
+            New-NavContainer -accept_eula -accept_outdated -containerName '$(container_name)' -auth NavUserPassword -credential $Credential -image $(image_name) -licenseFile $(license_file) -doNotExportObjectsToText -restart no -shortcuts None -useBestContainerOS -includeTestToolkit -includeTestLibrariesOnly -updateHosts
+
+
+- stage: Release
+  displayName: Release
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment:
+    displayName: Release
+    pool:
+      name: Default
+    environment: Release
+    strategy:
+      runOnce:
+        deploy:
+          steps:               
+            - task: PowerShell@1
+              displayName: Copy artifacts to release directory                  
+              inputs:
+                scriptType: inlineScript
+                inlineScript: >
+                  $Path = Split-Path '$(System.ArtifactsDirectory)' -Parent;
+                  $Artifact = "$Path\App Package\*.app";
+                  Copy-Item $Artifact 'C:\Release\';
