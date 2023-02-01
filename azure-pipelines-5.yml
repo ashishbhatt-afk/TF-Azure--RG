@@ -10,7 +10,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: Default
+      name: Azure Pipelines
     steps:
       - task: PowerShell@1    
         displayName: Create build container
@@ -26,7 +26,7 @@ stages:
   - deployment:
     displayName: Release
     pool:
-      name: Default
+      name: Azure Pipelines
       demands: xcode
     environment: Release
     strategy:
