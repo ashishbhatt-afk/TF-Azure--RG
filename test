@@ -3,7 +3,7 @@ box-sizing: border-box;
 body 
 -webkit-align-items: center; 
 align-items: center; 
-$grey4 url(".. 
+$grey5 url(".. 
 /img/coming-soon . jpg") no-repeat center center; 
 background : 
 background-size: cover; 
