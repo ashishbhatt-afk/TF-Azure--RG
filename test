@@ -5,8 +5,7 @@ body
 align-items: center; 
 $grey4 url(".. 
 /img/coming-soon . jpg") no-repeat center center; 
-background : 
-background-size: cover; 
+background : #888 background-size: cover; 
 -ms-box-orient: horizontal; 
 color: #ee3345; 
 display: -webkit-flex; 
