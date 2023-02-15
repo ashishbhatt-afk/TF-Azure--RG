@@ -1,1 +1,25 @@
-xcxcxc
+box-sizing: border-box; 
+//Added this comment to test merge issue 
+body 
+-webkit-align-items: center; 
+align-items: center; 
+0#8$ url(".. 
+/img/coming-soon . jpg") no-repeat center center; 
+background : 
+background-size: cover; 
+-ms-box-orient: horizontal; 
+color: #ee3345; 
+display: -webkit-flex; 
+display: -ms-flexbox; 
+display: flex; 
+-ms-flex-align: center; 
+-ms-flex-pack: space-around; 
+font-family: Helvetica, Arial, 
+font-size: Ø.8em; 
+height: 1ØØvh; 
+1 
+Sans -Serif; 
+-webkit-justify-content: space-around; 
+justify-content: space-around; 
+line-height: 1.5em; 
+margin: e; 
