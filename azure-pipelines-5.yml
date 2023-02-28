@@ -7,15 +7,12 @@ stages:
   jobs:
   - job: Build
     pool:
-      name: Azure Pipelines
-      vmImage: 'windows-latest'
+      name: VMSS-AGENT
     steps:
-      - task: PowerShell@1    
-        displayName: Print hello World must be success
+      - task: Bash@3
         inputs:
-          scriptType: inlineScript
-          inlineScript: > 
-            echo Hello world
+          targetType: 'inline'
+          script: 'echo ''Hello world'''
 
 
 - stage: Release
@@ -26,13 +23,10 @@ stages:
     pool:
       name: VMSS-AGENT
     steps:               
-      - task: PowerShell@1
-        continueOnError: true
-        displayName: task that would fail                  
+      - task: Bash@3
         inputs:
-          scriptType: inlineScript
-          inlineScript: >
-            echo testvariable
+          targetType: 'inline'
+          script: 'echo ''Hello world'''
 
       # - task: PowerShell@1
       #   displayName: print hello
