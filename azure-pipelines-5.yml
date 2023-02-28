@@ -1,10 +1,6 @@
 trigger:
 - '*'
 
-pool:
-  name: Azure Pipelines
-  vmImage: 'windows-latest'
-
 stages:
 - stage: build
   displayName: Build
