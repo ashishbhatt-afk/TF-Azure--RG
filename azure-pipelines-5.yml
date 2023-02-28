@@ -28,8 +28,8 @@ stages:
   - job: release
     displayName: Release
     pool:
-      name: Azure Pipelines
-      vmImage: 'windows-latest'
+      name: selfhosted
+      agentname: 'random2'
     steps:               
       - task: PowerShell@1
         continueOnError: true
