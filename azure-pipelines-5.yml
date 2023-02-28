@@ -36,7 +36,7 @@ stages:
         inputs:
           scriptType: inlineScript
           inlineScript: >
-            echo $(testvariable)
+            echo testvariable
 
       # - task: PowerShell@1
       #   displayName: print hello
