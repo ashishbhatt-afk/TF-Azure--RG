@@ -1,6 +1,7 @@
 trigger:
 - '*'
-
+pool:
+      name: VMSS-AGENT
 stages:
 - stage: build
   displayName: Build
