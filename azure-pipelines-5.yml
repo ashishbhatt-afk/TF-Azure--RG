@@ -20,7 +20,7 @@ stages:
   - job: release
     displayName: Release
     pool:
-      name: VMSS-AGENT
+      name: Azure Pipelines
     steps:               
       - task: Bash@3
         inputs:
