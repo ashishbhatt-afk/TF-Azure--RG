@@ -1,5 +1,10 @@
 trigger:
 - '*'
+
+variables:
+- name: showTestStage
+  value: false
+
 stages:
 - stage: build
   displayName: Build
@@ -15,6 +20,7 @@ stages:
 
 
 - stage: Release
+  condition: and(succeeded(), eq(variables['showTestStage'], 'true'))
   displayName: Release
   jobs:
   - job: release
@@ -26,10 +32,3 @@ stages:
         inputs:
           targetType: 'inline'
           script: 'echo ''Hello world'''
-
-      # - task: PowerShell@1
-      #   displayName: print hello
-      #   inputs:
-      #     scriptType: inlineScript
-      #     inlineScript: >
-      #       echo hello
