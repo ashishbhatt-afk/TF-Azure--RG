@@ -20,7 +20,7 @@ stages:
 
 
 - stage: Release
-  condition: and(succeeded(), eq(variables['showTestStage'], 'true'))
+  condition: and(succeeded(), eq(variables['showTestStage'], 'false'))
   displayName: Release
   jobs:
   - job: release
