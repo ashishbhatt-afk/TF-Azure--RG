@@ -1,0 +1,231 @@
+parameters:
+- name: iac_branch_name
+  type: string
+  default: "develop"
+- name: RunIaC
+  type: boolean
+  default: true
+- name: Mode
+  type: string
+  default: run
+  values:
+  - run
+  - clean
+  - test
+- name: GetDnaLib
+  type: boolean
+  default: false
+- name: CreateDataSourceSQLDB
+  type: boolean
+  default: false
+- name: CreateDataSourceBlob
+  type: boolean
+  default: false
+- name: SystemDebug
+  type: boolean
+  default: false
+- name: DataSourceGroup
+  displayName: The group you want to add to data source (optional)
+  type: string
+  default: ' '
+variables:
+- name: dev
+  value: "dev"
+- name: uat
+  value: "uat"
+- name: prod
+  value: "prod"
+- name: dd
+  value: "dd"
+- name: script_name
+  value: $(Build.DefinitionName).py
+- name: pool_name
+  value: "app-datahubs-prod"
+- name: provisioning_branch_name
+  value: "develop"
+- name: workingDirectory_utilities
+  value: '$(Pipeline.Workspace)/pg-de-cf-dnalib'
+- name: databricks_url
+  value: 'https://eastus2.azuredatabricks.net'
+- name: System.Debug
+  value: False
+- name: envos
+  value: $(envos)
+- name: drukarka
+  value: "$(lagi)"
+pool:
+  name: 'app-datahubs'
+resources:
+  repositories:
+  - repository: provisioning
+    type: git
+    name: coredatahub/provisioning
+    ref: 'refs/heads/develop'
+trigger:
+  enabled: false
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: CmdLine@2
+      inputs:
+        script: echo "Building..." echo $(lagi)
+- stage: Build2
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: CmdLine@2
+      inputs:
+        script: echo "Building..."
+- stage: dev
+  dependsOn: []
+  variables:
+  - group: launchpad-pipeline-dev
+  jobs:
+  - job: Build_env
+    timeoutInMinutes: 120
+    pool:
+      name: EX-VM-W-NonProd
+    steps:
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: provisioning
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: git://app-cdh-launchpad-sandbox/launchpad-sandbox.iac@refs/heads/develop
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: self
+    - task: PowerShell@2
+      displayName: 'Prepare variables'
+      inputs:
+        targetType: inline
+        script: "echo \"##vso[task.setvariable variable=script_name]$(Build.DefinitionName).py\"\necho \"##vso[task.setvariable variable=environment]dev\"\necho \"##vso[task.setvariable variable=pool_name]app-w-datahubs\"\necho \"##vso[task.setvariable variable=iac_branch_name]develop\"\necho \"##vso[task.setvariable variable=provisioning_branch_name]develop\"\necho \"##vso[task.setvariable variable=stage_name]$(System.StageDisplayName)\"\necho \"##vso[task.setvariable variable=mode]run\"\n\n$path_file=\"$(Build.SourcesDirectory)/launchpad-sandbox.iac/iac/$(Build.DefinitionName).py\"\n\ntry{\n  $sub_prod=(Select-String -Path $path_file -Pattern 'subscription_prod =' | Select-Object * -First 1).Line\n  $sub_prod = $sub_prod -match '(?<='')(.+)(?='')'\n  $sub_prod = $Matches[0]\n  echo \"##vso[task.setvariable variable=sub_prod]$sub_prod\"\n}\ncatch\n{\n  Write-Host \"##vso[task.logissue type=error]Can't find subscription_prod parameter in IaC file. Please add subscription_prod parameter to file $(Build.DefinitionName).py\"\n  exit 1\n}\n  \n$sub_dd_prod=(Select-String -Path $path_file -Pattern 'subscription_dd_prod =' | Select-Object * -First 1).Line\n$sub_dd_prod = $sub_dd_prod -match '(?<='')(.+)(?='')'\nif ($sub_dd_prod)\n{\n    $sub_dd_prod = $Matches[0]\n}\nelse\n{\n    $sub_dd_prod = $sub_prod\n}\necho \"##vso[task.setvariable variable=$sub_dd_prod]$sub_dd_prod\"\n\ntry{\n  $sub_nonprod=(Select-String -Path $path_file -Pattern 'subscription_nonprod =' | Select-Object * -First 1).Line\n  $sub_nonprod = $sub_nonprod -match '(?<='')(.+)(?='')'\n  $sub_nonprod = $Matches[0]\n  echo \"##vso[task.setvariable variable=sub_nonprod]$sub_nonprod\"\n}\ncatch\n{\n  Write-Host \"##vso[task.logissue type=error]Can't find subscription_nonprod parameter in IaC file. Please add subscription_nonprod parameter to file $(Build.DefinitionName).py\"\n  exit 1\n}\n\n$sub_uat_nonprod=(Select-String -Path $path_file -Pattern 'subscription_uat_nonprod =' | Select-Object * -First 1).Line\n$sub_uat_nonprod = $sub_uat_nonprod -match '(?<='')(.+)(?='')'\nif ($sub_uat_nonprod)\n{\n    $sub_uat_nonprod = $Matches[0]\n}\nelse\n{\n    $sub_uat_nonprod = $sub_nonprod\n}\necho \"##vso[task.setvariable variable=$$sub_uat_nonprod]$$sub_uat_nonprod\"\n\n\n$connection_details = @{\n    \"PG-NA-External-Prod-05\" = \"coredatahub-prod-01-PG-NA-External-Prod-05\", \"9f2dc2c1-597b-4989-808c-dfc50ad00288\"\n    \"PG-NA-External-Prod-02\" = \"PG-DH-Prod\", \"cbf879fb-2d14-474a-9fd5-cf145bd4759d\"\n    \"PG-NA-External-Spoke-DH-Prod-01\" = \"PG-NA-External-Spoke-DH-Prod\", \"0e1d0379-87a3-4178-b7a9-fe3fa3d5000a\"\n    \"PG-NA-External-Spoke-DH-Prod-02\" = \"PG-NA-External-Spoke-DH-Prod\", \"acf7121a-3fe3-49e1-b8cb-36dc3c69c422\"\n    \"PG-NA-External-Spoke-DH-Prod-03\" = \"PG-NA-External-Spoke-DH-Prod\", \"f6b725d1-d826-4f89-b9e9-866ffa0a9378\"\n    \"PG-NA-External-Spoke-DH-Prod-04\" = \"PG-NA-External-Spoke-DH-Prod\", \"470658b8-abad-4f14-b347-54f776d7218e\"\n    \"PG-NA-External-Spoke-DH-Prod-05\" = \"PG-NA-External-Spoke-DH-Prod\", \"c1077057-686d-4b82-aaaa-4ee6d426873c\"\n    \"PG-NA-External-NonProd-05\" = \"PG DH non-prod\", \"67e270e3-8e55-46e7-ac28-cf8efe883de1\"\n    \"PG-NA-External-Spoke-DH-NonProd-01\" = \"PG-NA-External-Spoke-DH-NonProd\", \"cbf73765-2c60-4de7-a499-6e1ae2f64078\"\n    \"PG-NA-External-Spoke-DH-NonProd-02\" = \"PG-NA-External-Spoke-DH-NonProd\", \"fbd46a2f-18f0-4dc3-99de-50e003084996\"\n    \"PG-NA-External-Spoke-DH-NonProd-03\" = \"PG-NA-External-Spoke-DH-NonProd\", \"24b884ae-6258-4115-97b2-2dd492d6e25a\"\n    \"PG-NA-External-Spoke-DH-NonProd-04\" = \"PG-NA-External-Spoke-DH-NonProd\", \"b8dec86d-12dc-46f8-8729-cd7fa3c1ed3c\"\n    \"PG-NA-External-Spoke-DH-NonProd-05\" = \"PG-NA-External-Spoke-DH-NonProd\", \"3995a5b6-631f-4dd4-b094-ed38901a2af2\"\n}\n\nif (\"$(System.StageDisplayName)\" -eq \"dev\")\n{\n    echo \"##vso[task.setvariable variable=env]DV\"\n    if ($connection_details[$sub_nonprod])\n    {\n        $subscription_name = $sub_nonprod\n        $subscription_id = $connection_details[$sub_nonprod][1]\n        $service_connection_name = $connection_details[$sub_nonprod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_nonprod in connection_details. Please add $sub_nonprod to connection_details.\"\n        exit 1\n    }\n    \n}\nelseif (\"$(System.StageDisplayName)\" -eq \"uat\")\n{\n    echo \"##vso[task.setvariable variable=env]UT\"\n    if ($connection_details[$sub_uat_nonprod])\n    {\n        $subscription_name = $sub_uat_nonprod\n        $subscription_id = $connection_details[$sub_uat_nonprod][1]\n        $service_connection_name = $connection_details[$sub_uat_nonprod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_uat_nonprod in connection_details. Please add $sub_uat_nonprod to connection_details.\"\n        exit 1\n    }\n}\nelseif (\"$(System.StageDisplayName)\" -eq \"prod\")\n{\n    if ($connection_details[$sub_prod])\n    { \n        $subscription_name = $sub_prod\n        $subscription_id = $connection_details[$sub_prod][1]\n        $service_connection_name = $connection_details[$sub_prod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_prod in connection_details. Please add $sub_prod to connection_details.\"\n        exit 1\n    }\n}\nelseif (\"$(System.StageDisplayName)\" -eq \"dd\")\n{\n    echo \"$sub_dd_prod subscription on DD env\"\n    echo \"##vso[task.setvariable variable=env]DD\"\n    if ($connection_details[$sub_dd_prod])\n    { \n        $subscription_name = $sub_dd_prod\n        $subscription_id = $connection_details[$sub_dd_prod][1]\n        $service_connection_name = $connection_details[$sub_dd_prod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_dd_prod in connection_details. Please add $sub_dd_prod to connection_details.\"\n        exit 1\n    }\n}\n  \nRemove-Variable group_env_* -Scope Global\n$groups = \n\n$groups = $groups | ConvertTo-Json\n$groups = $groups | ConvertFrom-Json\nWrite-Output $groups\n  \n$env_stages = ('DV','UT','PROD','DD')\n$access_levels = ('admin','contributor','reader')\n\nForEach ($e in $env_stages) {\n\n    ForEach ($access_level in $access_levels) {\n\n        if (![string]::IsNullOrEmpty($groups.$e.$access_level)){\n                New-Variable -Name \"group_env_$e\" -Value $e\n                break\n        }\n    }\n    \n}\n\nif (\"$group_env_dv\"){\n    echo \"##vso[task.setvariable variable=group_env_dv]$group_env_dv\"\n    \n    $list_group_dv = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_dv.$access_level)){\n            $list_group_dv.Add($groups.$group_env_dv.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_dv]$list_group_dv\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_dv]$null\"\n}\n  \nif (\"$group_env_ut\"){\n    echo \"##vso[task.setvariable variable=group_env_ut]$group_env_ut\"\n  \n    $list_group_ut = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_ut.$access_level)){\n            $list_group_ut.Add($groups.$group_env_ut.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_ut]$list_group_ut\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_ut]$null\"\n}\n  \nif (\"$group_env_prod\"){\n    echo \"##vso[task.setvariable variable=group_env_prod]$group_env_prod\"\n    \n    $list_group_prod = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_prod.$access_level)){\n            $list_group_prod.Add($groups.$group_env_prod.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_prod]$list_group_prod\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_prod]$null\"\n}\n  \nif (\"$group_env_dd\"){\n    echo \"##vso[task.setvariable variable=group_env_dd]$group_env_dd\"\n    \n    $list_group_dd = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_dd.$access_level)){\n            $list_group_dd.Add($groups.$group_env_dd.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_dd]$list_group_dd\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_dd]$null\"\n}\n\n  \n\nif ( (\"$(System.StageDisplayName)\" -eq \"dev\") -or (\"$(System.StageDisplayName)\" -eq \"uat\") -or (\"$(System.StageDisplayName)\" -eq \"prod\") -or (\"$(System.StageDisplayName)\" -eq \"dd\") -or (\"$(System.StageDisplayName)\" -eq \"remove_old_groups_accesses\") )\n{\n  $environment_small=\"$(environment)\".ToLower()\n  $environment_up=\"$(environment)\".ToUpper()\n  $script_name_split = \"$(script_name)\".Split('-')\n  $region=$script_name_split[1]\n  $region_up=\"$region\".ToUpper()\n  $region_small=\"$region\".ToLower()\n  $platform =$script_name_split[0].Substring(2,$script_name_split[0].length -2)\n  $sufix=$script_name_split[2].Substring(0,2)\n  if ($platform -eq \"launchpad\"){\n      $platform_up = \"LaunchPad\"\n  } elseif ($platform -eq \"sandbox\"){\n      $platform_up = \"Sandbox\"\n  }\n  if (\"$(System.StageDisplayName)\" -eq \"remove_old_groups_accesses\"){\n    $rg=\"AZ-RG-CoreDataHub-$region_up-$platform_up-$sufix\"\n    $kv_name=\"kv-cdh-$platform-$region_up-$sufix\"\n  }\n  else{\n    $rg=\"AZ-RG-CoreDataHub-$region_up-$platform_up-$sufix$environment_up\"\n    $kv_name=\"kv-cdh-$platform-$region_small-$sufix$environment_small\"\n  }\n  $dwn=\"databricks-cdh-$platform-$region_small-$sufix$environment_small\"\n  $adf_name=\"adf-cdh-$platform-$region_small-$sufix$environment_small\"\n\n  echo \"##vso[task.setvariable variable=region]$region_up\"\n  echo \"##vso[task.setvariable variable=sufix]$sufix\"\n  echo \"##vso[task.setvariable variable=rg]$rg\"\n  echo \"##vso[task.setvariable variable=dwn]$dwn\"\n  echo \"##vso[task.setvariable variable=kv_name]$kv_name\"\n  echo \"##vso[task.setvariable variable=adf_name]$adf_name\"\n  echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n}\n  \nif (! ((\"$(System.StageDisplayName)\" -eq \"dev\") -or (\"$(System.StageDisplayName)\" -eq \"uat\") -or (\"$(System.StageDisplayName)\" -eq \"prod\") -or (\"$(System.StageDisplayName)\" -eq \"dd\"))){\n  echo \"##vso[task.setvariable variable=env]$null\"\n}\n"
+    - task: PowerShell@2
+      displayName: 'Show variables'
+      inputs:
+        targetType: inline
+        script: |
+          echo "Region: $(region)"
+          echo "Sufix: $(sufix)"
+          echo "RG: $(rg)"
+          echo "KeyvaultName: $(kv_name)"
+          echo "DatabricksWorkspaceName: $(dwn)"
+          echo "AdfName: $(adf_name)"
+          if (Get-Variable subscriptionId -erroraction Silentlycontinue){
+              echo "SubscriptionId: $(subscriptionId) "
+          }
+          echo "PoolName: $(pool_name)"
+          echo "LaunchpadSandboxIacBranchName: $(iac_branch_name)"
+          echo "ProvisioningBranchName: $(provisioning_branch_name)"
+          echo "StageName: $(stage_name)"
+          if (Get-Variable service_connection_name -erroraction Silentlycontinue){
+              echo "Service Connection name: $(service_connection_name)"
+          }
+          echo "Subscription Name: $(subscription_name)"
+          echo "Mode: $(mode)"
+          echo "env: $(env)"
+          if ("$(group_env_dv)"){
+              echo "group_env_dv: $(group_env_dv)"
+          }
+          if ("$(group_env_ut)"){
+              echo "group_env_ut: $(group_env_ut)"
+          }
+          if ("$(group_env_prod)"){
+              echo "group_env_prod: $(group_env_prod)"
+          }
+          if ("$(group_env_dd)"){
+              echo "group_env_dd: $(group_env_dd)"
+          }
+    - task: benjhuser.tfs-extensions-build-tasks.trigger-build-task.TriggerBuild@3
+      timeoutInMinutes: 150
+      displayName: 'Trigger a new build of IaC-$(environment)-5'
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      inputs:
+        definitionIsInCurrentTeamProject: false
+        tfsServer: '$(System.TeamFoundationCollectionUri)'
+        teamProject: 'ce070b4a-98a8-4398-bc2a-f53638c69666'
+        buildDefinition: 'launcher-dev'
+        useSameBranch: false
+        branchToUse: $(provisioning_branch_name)
+        waitForQueuedBuildsToFinish: true
+        buildParameters: 'SCRIPT_NAME: $(SCRIPT_NAME), environment : $(environment), env: $(env), iac_branch_name: $(iac_branch_name),provisioning_branch_name: $(provisioning_branch_name), service_connection_name: $(service_connection_name), subscription_name: $(subscription_name), mode: $(mode)'
+        authenticationMethod: 'OAuth Token'
+- stage: uat
+  dependsOn: []
+  variables:
+  - group: launchpad-pipeline-uat
+  jobs:
+  - job: Build_env
+    timeoutInMinutes: 120
+    pool:
+      name: EX-VM-W-NonProd
+    steps:
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: provisioning
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: git://app-cdh-launchpad-sandbox/launchpad-sandbox.iac@refs/heads/develop
+    - task: 6d15af64-176c-496d-b583-fd2ae21d4df4@1
+      inputs:
+        repository: self
+    - task: PowerShell@2
+      displayName: 'Prepare variables'
+      inputs:
+        targetType: inline
+        script: "echo \"##vso[task.setvariable variable=script_name]$(Build.DefinitionName).py\"\necho \"##vso[task.setvariable variable=environment]uat\"\necho \"##vso[task.setvariable variable=pool_name]app-w-datahubs\"\necho \"##vso[task.setvariable variable=iac_branch_name]develop\"\necho \"##vso[task.setvariable variable=provisioning_branch_name]develop\"\necho \"##vso[task.setvariable variable=stage_name]$(System.StageDisplayName)\"\necho \"##vso[task.setvariable variable=mode]run\"\n\n$path_file=\"$(Build.SourcesDirectory)/launchpad-sandbox.iac/iac/$(Build.DefinitionName).py\"\n\ntry{\n  $sub_prod=(Select-String -Path $path_file -Pattern 'subscription_prod =' | Select-Object * -First 1).Line\n  $sub_prod = $sub_prod -match '(?<='')(.+)(?='')'\n  $sub_prod = $Matches[0]\n  echo \"##vso[task.setvariable variable=sub_prod]$sub_prod\"\n}\ncatch\n{\n  Write-Host \"##vso[task.logissue type=error]Can't find subscription_prod parameter in IaC file. Please add subscription_prod parameter to file $(Build.DefinitionName).py\"\n  exit 1\n}\n  \n$sub_dd_prod=(Select-String -Path $path_file -Pattern 'subscription_dd_prod =' | Select-Object * -First 1).Line\n$sub_dd_prod = $sub_dd_prod -match '(?<='')(.+)(?='')'\nif ($sub_dd_prod)\n{\n    $sub_dd_prod = $Matches[0]\n}\nelse\n{\n    $sub_dd_prod = $sub_prod\n}\necho \"##vso[task.setvariable variable=$sub_dd_prod]$sub_dd_prod\"\n\ntry{\n  $sub_nonprod=(Select-String -Path $path_file -Pattern 'subscription_nonprod =' | Select-Object * -First 1).Line\n  $sub_nonprod = $sub_nonprod -match '(?<='')(.+)(?='')'\n  $sub_nonprod = $Matches[0]\n  echo \"##vso[task.setvariable variable=sub_nonprod]$sub_nonprod\"\n}\ncatch\n{\n  Write-Host \"##vso[task.logissue type=error]Can't find subscription_nonprod parameter in IaC file. Please add subscription_nonprod parameter to file $(Build.DefinitionName).py\"\n  exit 1\n}\n\n$sub_uat_nonprod=(Select-String -Path $path_file -Pattern 'subscription_uat_nonprod =' | Select-Object * -First 1).Line\n$sub_uat_nonprod = $sub_uat_nonprod -match '(?<='')(.+)(?='')'\nif ($sub_uat_nonprod)\n{\n    $sub_uat_nonprod = $Matches[0]\n}\nelse\n{\n    $sub_uat_nonprod = $sub_nonprod\n}\necho \"##vso[task.setvariable variable=$$sub_uat_nonprod]$$sub_uat_nonprod\"\n\n\n$connection_details = @{\n    \"PG-NA-External-Prod-05\" = \"coredatahub-prod-01-PG-NA-External-Prod-05\", \"9f2dc2c1-597b-4989-808c-dfc50ad00288\"\n    \"PG-NA-External-Prod-02\" = \"PG-DH-Prod\", \"cbf879fb-2d14-474a-9fd5-cf145bd4759d\"\n    \"PG-NA-External-Spoke-DH-Prod-01\" = \"PG-NA-External-Spoke-DH-Prod\", \"0e1d0379-87a3-4178-b7a9-fe3fa3d5000a\"\n    \"PG-NA-External-Spoke-DH-Prod-02\" = \"PG-NA-External-Spoke-DH-Prod\", \"acf7121a-3fe3-49e1-b8cb-36dc3c69c422\"\n    \"PG-NA-External-Spoke-DH-Prod-03\" = \"PG-NA-External-Spoke-DH-Prod\", \"f6b725d1-d826-4f89-b9e9-866ffa0a9378\"\n    \"PG-NA-External-Spoke-DH-Prod-04\" = \"PG-NA-External-Spoke-DH-Prod\", \"470658b8-abad-4f14-b347-54f776d7218e\"\n    \"PG-NA-External-Spoke-DH-Prod-05\" = \"PG-NA-External-Spoke-DH-Prod\", \"c1077057-686d-4b82-aaaa-4ee6d426873c\"\n    \"PG-NA-External-NonProd-05\" = \"PG DH non-prod\", \"67e270e3-8e55-46e7-ac28-cf8efe883de1\"\n    \"PG-NA-External-Spoke-DH-NonProd-01\" = \"PG-NA-External-Spoke-DH-NonProd\", \"cbf73765-2c60-4de7-a499-6e1ae2f64078\"\n    \"PG-NA-External-Spoke-DH-NonProd-02\" = \"PG-NA-External-Spoke-DH-NonProd\", \"fbd46a2f-18f0-4dc3-99de-50e003084996\"\n    \"PG-NA-External-Spoke-DH-NonProd-03\" = \"PG-NA-External-Spoke-DH-NonProd\", \"24b884ae-6258-4115-97b2-2dd492d6e25a\"\n    \"PG-NA-External-Spoke-DH-NonProd-04\" = \"PG-NA-External-Spoke-DH-NonProd\", \"b8dec86d-12dc-46f8-8729-cd7fa3c1ed3c\"\n    \"PG-NA-External-Spoke-DH-NonProd-05\" = \"PG-NA-External-Spoke-DH-NonProd\", \"3995a5b6-631f-4dd4-b094-ed38901a2af2\"\n}\n\nif (\"$(System.StageDisplayName)\" -eq \"dev\")\n{\n    echo \"##vso[task.setvariable variable=env]DV\"\n    if ($connection_details[$sub_nonprod])\n    {\n        $subscription_name = $sub_nonprod\n        $subscription_id = $connection_details[$sub_nonprod][1]\n        $service_connection_name = $connection_details[$sub_nonprod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_nonprod in connection_details. Please add $sub_nonprod to connection_details.\"\n        exit 1\n    }\n    \n}\nelseif (\"$(System.StageDisplayName)\" -eq \"uat\")\n{\n    echo \"##vso[task.setvariable variable=env]UT\"\n    if ($connection_details[$sub_uat_nonprod])\n    {\n        $subscription_name = $sub_uat_nonprod\n        $subscription_id = $connection_details[$sub_uat_nonprod][1]\n        $service_connection_name = $connection_details[$sub_uat_nonprod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_uat_nonprod in connection_details. Please add $sub_uat_nonprod to connection_details.\"\n        exit 1\n    }\n}\nelseif (\"$(System.StageDisplayName)\" -eq \"prod\")\n{\n    if ($connection_details[$sub_prod])\n    { \n        $subscription_name = $sub_prod\n        $subscription_id = $connection_details[$sub_prod][1]\n        $service_connection_name = $connection_details[$sub_prod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_prod in connection_details. Please add $sub_prod to connection_details.\"\n        exit 1\n    }\n}\nelseif (\"$(System.StageDisplayName)\" -eq \"dd\")\n{\n    echo \"$sub_dd_prod subscription on DD env\"\n    echo \"##vso[task.setvariable variable=env]DD\"\n    if ($connection_details[$sub_dd_prod])\n    { \n        $subscription_name = $sub_dd_prod\n        $subscription_id = $connection_details[$sub_dd_prod][1]\n        $service_connection_name = $connection_details[$sub_dd_prod][0]\n        echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n        echo \"##vso[task.setvariable variable=subscriptionId]$subscription_id\"\n        echo \"##vso[task.setvariable variable=service_connection_name]$service_connection_name\"\n    }\n    else\n    {\n        Write-Host \"##vso[task.logissue type=error] Can't find subscription $sub_dd_prod in connection_details. Please add $sub_dd_prod to connection_details.\"\n        exit 1\n    }\n}\n  \nRemove-Variable group_env_* -Scope Global\n$groups = \n\n$groups = $groups | ConvertTo-Json\n$groups = $groups | ConvertFrom-Json\nWrite-Output $groups\n  \n$env_stages = ('DV','UT','PROD','DD')\n$access_levels = ('admin','contributor','reader')\n\nForEach ($e in $env_stages) {\n\n    ForEach ($access_level in $access_levels) {\n\n        if (![string]::IsNullOrEmpty($groups.$e.$access_level)){\n                New-Variable -Name \"group_env_$e\" -Value $e\n                break\n        }\n    }\n    \n}\n\nif (\"$group_env_dv\"){\n    echo \"##vso[task.setvariable variable=group_env_dv]$group_env_dv\"\n    \n    $list_group_dv = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_dv.$access_level)){\n            $list_group_dv.Add($groups.$group_env_dv.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_dv]$list_group_dv\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_dv]$null\"\n}\n  \nif (\"$group_env_ut\"){\n    echo \"##vso[task.setvariable variable=group_env_ut]$group_env_ut\"\n  \n    $list_group_ut = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_ut.$access_level)){\n            $list_group_ut.Add($groups.$group_env_ut.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_ut]$list_group_ut\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_ut]$null\"\n}\n  \nif (\"$group_env_prod\"){\n    echo \"##vso[task.setvariable variable=group_env_prod]$group_env_prod\"\n    \n    $list_group_prod = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_prod.$access_level)){\n            $list_group_prod.Add($groups.$group_env_prod.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_prod]$list_group_prod\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_prod]$null\"\n}\n  \nif (\"$group_env_dd\"){\n    echo \"##vso[task.setvariable variable=group_env_dd]$group_env_dd\"\n    \n    $list_group_dd = New-Object System.Collections.Generic.List[System.Object]\n    ForEach ($access_level in $access_levels) {\n        if (![string]::IsNullOrEmpty($groups.$group_env_dd.$access_level)){\n            $list_group_dd.Add($groups.$group_env_dd.$access_level)\n        }\n    }\n    echo \"##vso[task.setvariable variable=list_group_dd]$list_group_dd\"\n}\nelse{\n    echo \"##vso[task.setvariable variable=group_env_dd]$null\"\n}\n\n  \n\nif ( (\"$(System.StageDisplayName)\" -eq \"dev\") -or (\"$(System.StageDisplayName)\" -eq \"uat\") -or (\"$(System.StageDisplayName)\" -eq \"prod\") -or (\"$(System.StageDisplayName)\" -eq \"dd\") -or (\"$(System.StageDisplayName)\" -eq \"remove_old_groups_accesses\") )\n{\n  $environment_small=\"$(environment)\".ToLower()\n  $environment_up=\"$(environment)\".ToUpper()\n  $script_name_split = \"$(script_name)\".Split('-')\n  $region=$script_name_split[1]\n  $region_up=\"$region\".ToUpper()\n  $region_small=\"$region\".ToLower()\n  $platform =$script_name_split[0].Substring(2,$script_name_split[0].length -2)\n  $sufix=$script_name_split[2].Substring(0,2)\n  if ($platform -eq \"launchpad\"){\n      $platform_up = \"LaunchPad\"\n  } elseif ($platform -eq \"sandbox\"){\n      $platform_up = \"Sandbox\"\n  }\n  if (\"$(System.StageDisplayName)\" -eq \"remove_old_groups_accesses\"){\n    $rg=\"AZ-RG-CoreDataHub-$region_up-$platform_up-$sufix\"\n    $kv_name=\"kv-cdh-$platform-$region_up-$sufix\"\n  }\n  else{\n    $rg=\"AZ-RG-CoreDataHub-$region_up-$platform_up-$sufix$environment_up\"\n    $kv_name=\"kv-cdh-$platform-$region_small-$sufix$environment_small\"\n  }\n  $dwn=\"databricks-cdh-$platform-$region_small-$sufix$environment_small\"\n  $adf_name=\"adf-cdh-$platform-$region_small-$sufix$environment_small\"\n\n  echo \"##vso[task.setvariable variable=region]$region_up\"\n  echo \"##vso[task.setvariable variable=sufix]$sufix\"\n  echo \"##vso[task.setvariable variable=rg]$rg\"\n  echo \"##vso[task.setvariable variable=dwn]$dwn\"\n  echo \"##vso[task.setvariable variable=kv_name]$kv_name\"\n  echo \"##vso[task.setvariable variable=adf_name]$adf_name\"\n  echo \"##vso[task.setvariable variable=subscription_name]$subscription_name\"\n}\n  \nif (! ((\"$(System.StageDisplayName)\" -eq \"dev\") -or (\"$(System.StageDisplayName)\" -eq \"uat\") -or (\"$(System.StageDisplayName)\" -eq \"prod\") -or (\"$(System.StageDisplayName)\" -eq \"dd\"))){\n  echo \"##vso[task.setvariable variable=env]$null\"\n}\n"
+    - task: PowerShell@2
+      displayName: 'Show variables'
+      inputs:
+        targetType: inline
+        script: |
+          echo "Region: $(region)"
+          echo "Sufix: $(sufix)"
+          echo "RG: $(rg)"
+          echo "KeyvaultName: $(kv_name)"
+          echo "DatabricksWorkspaceName: $(dwn)"
+          echo "AdfName: $(adf_name)"
+          if (Get-Variable subscriptionId -erroraction Silentlycontinue){
+              echo "SubscriptionId: $(subscriptionId) "
+          }
+          echo "PoolName: $(pool_name)"
+          echo "LaunchpadSandboxIacBranchName: $(iac_branch_name)"
+          echo "ProvisioningBranchName: $(provisioning_branch_name)"
+          echo "StageName: $(stage_name)"
+          if (Get-Variable service_connection_name -erroraction Silentlycontinue){
+              echo "Service Connection name: $(service_connection_name)"
+          }
+          echo "Subscription Name: $(subscription_name)"
+          echo "Mode: $(mode)"
+          echo "env: $(env)"
+          if ("$(group_env_dv)"){
+              echo "group_env_dv: $(group_env_dv)"
+          }
+          if ("$(group_env_ut)"){
+              echo "group_env_ut: $(group_env_ut)"
+          }
+          if ("$(group_env_prod)"){
+              echo "group_env_prod: $(group_env_prod)"
+          }
+          if ("$(group_env_dd)"){
+              echo "group_env_dd: $(group_env_dd)"
+          }
+    - task: benjhuser.tfs-extensions-build-tasks.trigger-build-task.TriggerBuild@3
+      timeoutInMinutes: 150
+      displayName: 'Trigger a new build of IaC-$(environment)-5'
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      inputs:
+        definitionIsInCurrentTeamProject: false
+        tfsServer: '$(System.TeamFoundationCollectionUri)'
+        teamProject: 'ce070b4a-98a8-4398-bc2a-f53638c69666'
+        buildDefinition: 'launcher-uat'
+        useSameBranch: false
+        branchToUse: $(provisioning_branch_name)
+        waitForQueuedBuildsToFinish: true
+        buildParameters: 'SCRIPT_NAME: $(SCRIPT_NAME), environment : $(environment), env: $(env), iac_branch_name: $(iac_branch_name),provisioning_branch_name: $(provisioning_branch_name), service_connection_name: $(service_connection_name), subscription_name: $(subscription_name), mode: $(mode)'
+        authenticationMethod: 'OAuth Token'
+
