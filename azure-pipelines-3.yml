@@ -1,33 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-trigger:
-- main
-
-pool:
-  vmImage: ubuntu-latest
-
-steps:
- stages:
-  - stage: one
-  - task: CmdLine@2
-    inputs:
-      script: |
-        echo Write your commands here
-        
-        echo Hello world
-
-  - stage: two
-     pool: selfhosted
-     - task: CmdLine@2
-     inputs:
-       script: |
-         echo Write your commands here
-         
-
-  - stage: three
-    dependsOn:
-    - two
-    condition: failed('two')
+version https://git-lfs.github.com/spec/v1
+oid sha256:7d31975869ca57b1b2d8ff881111e5ea7a337a2e7ac46c43b304f2665186c619
+size 624
