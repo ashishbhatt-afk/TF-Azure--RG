@@ -19,7 +19,7 @@ steps:
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
-     az devops configure --defaults organization="https://dev.azure.com/ashishbhatt0517/" project="remote"
-     az repos show --repository "test" --project "remote" --query "webUrl" --output tsv
+     az devops configure --defaults organization="https://dev.azure.com/ashishbhatt0517/" project="First_project"
+     az repos show --repository "First_project" --project "First_project" --query "webUrl" --output tsv
   env:
     AZURE_DEVOPS_EXT_PAT: "$(System.AccessToken)"
