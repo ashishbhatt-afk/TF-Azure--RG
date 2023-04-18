@@ -18,5 +18,4 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
      az devops configure --defaults organization="https://dev.azure.com/ashishbhatt0517/" project="2nd project"
-     clone_url=$(az repos show --repository " ssd" --project "2nd project" --query "webUrl" --output tsv)
-     echo $clone_url
+     az repos show --repository " ssd" --project "2nd project" --query "webUrl" --output tsv
