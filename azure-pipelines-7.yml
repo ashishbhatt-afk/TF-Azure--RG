@@ -9,6 +9,8 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+#Your build pipeline references an undefined variable named ‘az repos show --repository " ssd" --project "2nd project" --query "webUrl" --output tsv’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+
 steps:
 - task: AzureCLI@2
   displayName: 'Azure CLI '
@@ -19,3 +21,5 @@ steps:
     inlineScript: |
      az devops configure --defaults organization="https://dev.azure.com/ashishbhatt0517/" project="2nd project"
      az repos show --repository " ssd" --project "2nd project" --query "webUrl" --output tsv
+  env:
+    AZURE_DEVOPS_EXT_PAT: "$(System.AccessToken)"
