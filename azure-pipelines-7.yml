@@ -1,0 +1,22 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: AzureCLI@2
+  displayName: 'Azure CLI '
+  inputs:
+    azureSubscription: 'Ashish MS subscription (0008a405-852b-4afc-9587-8de9561a9db1)'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+     az devops configure --defaults organization="https://dev.azure.com/ashishbhatt0517/" project="2nd project"
+     clone_url=$(az repos show --repository " ssd" --project "2nd project" --query "webUrl" --output tsv)
+     echo $clone_url
