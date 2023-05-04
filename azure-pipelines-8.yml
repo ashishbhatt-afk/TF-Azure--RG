@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+    - main
+resources:
+  containers: []
+  repositories:
+  - repository: piper-pipeline-azure
+    endpoint: github.tools.sap
+    type: githubenterprise
+    name: project-piper/piper-pipeline-azure
+variables:
+- name: hyperspace.piper.version
+  value: latest
+- name: hyperspace.sappiper.version
+  value: latest
+- name: hyperspace.azure.pool.name.mshosted
+  value: "Azure Pipelines"
+- name: hyperspace.azure.pool.name.selfhosted
+  value: vmss-pilot
+- name: hyperspace.azure.pool.vmImage.ubuntu
+  value: "ubuntu-latest"
+- name: hyperspace.piper.nextGenStageConditions
+  value: true
+- name: hyperspace.sappiper.repository
+  value: sap-piper
+- name: hyperspace.sappiper.owner
+  value: project-piper
+- name: hyperspace.sappiper.binaryname
+  value: sap-piper
+- name: hyperspace.piper.enforcedOSArch
+  value: ''
+stages:
+- stage: Init
+  displayName: Init
+  pool:
+    name: "$(hyperspace.azure.pool.name.mshosted)"
+    vmImage: "$(hyperspace.azure.pool.vmImage.ubuntu)"
+  jobs:
+  - job: setup
+    displayName: Setup Pipeline Environment
+    variables:
+    - name: currentBranch
+      value: $[variables['Build.SourceBranchName']]
+    steps:
+    - task: Bash@3
+      name: test
+      displayName: test
+      inputs:
+        targetType: inline
+        script: |
+          echo hello
