@@ -2,13 +2,6 @@ trigger:
   branches:
     include:
     - main
-resources:
-  containers: []
-  repositories:
-  - repository: piper-pipeline-azure
-    endpoint: github.tools.sap
-    type: githubenterprise
-    name: project-piper/piper-pipeline-azure
 variables:
 - name: hyperspace.piper.version
   value: latest
