@@ -19,7 +19,7 @@ steps:
 - task: Npm@1
   inputs:
     command: 'install'
-    workingDir: '$(Build.Repository.LocalPath)' #replace with the package.json folder
+    workingDir: '$(Build.Repository.LocalPath)/' #replace with the package.json folder
     verbose: true
   displayName: 'Install npm package'
 
@@ -29,7 +29,7 @@ steps:
 - task: Npm@1
   inputs:
     command: 'custom'
-    workingDir: '$(Build.Repository.LocalPath)' #replace with the package.json folder
+    workingDir: '$(Build.Repository.LocalPath)/' #replace with the package.json folder
     customCommand: 'run build validate $(Build.Repository.LocalPath) /subscriptions/0008a405-852b-4afc-9587-8de9561a9db1/resourceGroups/CASE_TS/providers/Microsoft.DataFactory/factories/testADF122'
   displayName: 'Validate'
   continueOnError: true
