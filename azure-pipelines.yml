@@ -40,7 +40,7 @@ steps:
 - task: Npm@1
   inputs:
     command: 'custom'
-    workingDir: '$(Build.Repository.LocalPath)/<folder-of-the-package.json-file>' #replace with the package.json folder
+    workingDir: '$(Build.Repository.LocalPath)/' #replace with the package.json folder
     customCommand: 'run build export $(Build.Repository.LocalPath)/0008a405-852b-4afc-9587-8de9561a9db1/resourceGroups/CASE_TS/providers/Microsoft.DataFactory/factories/testADF122 "ArmTemplate"'
 #For using preview that allows you to only stop/ start triggers that are modified, please comment out the above line and uncomment the below line. Make sure the package.json contains the build-preview command. 
  #customCommand: 'run build-preview export $(Build.Repository.LocalPath) /subscriptions/222f1459-6ebd-4896-82ab-652d5f6883cf/resourceGroups/GartnerMQ2021/providers/Microsoft.DataFactory/factories/Dev-GartnerMQ2021-DataFactory "ArmTemplate"'
