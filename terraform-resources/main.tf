@@ -18,6 +18,10 @@ terraform {
   }
   #required_version = ">= 0.13"
 }
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
 
 module "resource_group" {
   source             = "../terraform-modules/resource_group"
