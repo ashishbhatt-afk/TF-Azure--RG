@@ -4,7 +4,7 @@ terraform {
     subscription_id      = "0008a405-852b-4afc-9587-8de9561a9db1"
     resource_group_name  = "test"
     storage_account_name = "foreverything1" # Storage account used for backend
-    container_name       = "blogstate"
+    container_name       = "test-container"
     key                  = "terraform.tfstate" # Terraform State file
   }
 }
