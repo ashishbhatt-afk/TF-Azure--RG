@@ -20,9 +20,10 @@ steps:
 
  
 
-- powershell: |
-
-      $VARIABLE_GROUP_NAME="test"
+- task: CmdLine@2 
+  inputs:
+    script: |
+      VARIABLE_GROUP_NAME="test"
 
       GROUP_ID=$(az pipelines variable-group list --org https://dev.azure.com/ashishbhatt0517/ --project First_project --query "[?name=='$VARIABLE_GROUP_NAME'].id" --output tsv)
 
