@@ -1,3 +1,37 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:496c43f89af001c3be7165467244388b62898afcdb3a21aa086b2c2d2f568ed3
-size 2743
+
+trigger:
+  - main
+
+pool:
+  vmimage: ubuntu-latest
+
+steps:
+- task: Bash@3
+
+  inputs:
+
+    targetType: 'inline'
+
+    script: |
+
+        az devops configure --defaults organization=$(System.TeamFoundationCollectionUri) project=$(System.TeamProject) --use-git-aliases true
+
+    # displayName: 'Set default Azure DevOps organization and project'
+
+ 
+
+- bash: |
+
+      VARIABLE_GROUP_NAME="test"
+
+      GROUP_ID=$(az pipelines variable-group list --org https://dev.azure.com/ashishbhatt0517/ --project First_project --query "[?name=='$VARIABLE_GROUP_NAME'].id" --output tsv)
+
+      VARIABLES=$(az pipelines variable-group variable list --org https://dev.azure.com/ashishbhatt0517/ --project First_project --group-id $GROUP_ID --output json)
+
+      echo "$VARIABLES" |  jq -r 'to_entries[] | "\(.key): \(.value.value)"'
+
+  displayName: 'Show VG'
+
+  env:
+
+    AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
